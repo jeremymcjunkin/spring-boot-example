@@ -29,7 +29,7 @@ Parameters:
   ContainerImage:
     Description: The docker image to use in the task definition. ex aaa.dkr.ecr.us-east-1.amazonaws.com/ryan-test:listenport
     Type: String
-    Default: 104690896806.dkr.ecr.us-east-1.amazonaws.com/myezteam/master:latest
+    Default: 104690896806.dkr.ecr.us-east-1.amazonaws.com/spring-boot-example/master:latest
 
   SsmEnvPrefix:
     Description: What path prefix to pull SSM params from to set as env vars for task container.  Ex:/prod/img-manip/master/ResizeImage/ecsEnvs/
