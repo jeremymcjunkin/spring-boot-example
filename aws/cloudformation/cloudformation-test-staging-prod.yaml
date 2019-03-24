@@ -53,7 +53,7 @@ Parameters:
   CodeBuildImageTest:
     Description: Image for the CodeBuild container that runs linting and test cases.
     Type: String
-    Default: openjdk:8-jdk-alpine
+    Default: gradle:jdk10
   CodeBuildImage:
     Description: Image for the CodeBuild container that builds the final app docker image.  See https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
     Type: String
