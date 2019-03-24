@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      # Print all environment variables (handy for AWS CodeBuild logs)
+      - env
+      - pwd
+  pre_build:
+    commands:
+      - echo pre_build
+  build:
+    commands:
+      - echo testing complete

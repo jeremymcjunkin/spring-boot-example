@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  feed-cleaning ecs fargate resources
+
+Parameters:
+
+  EcsCfClusterStackName:
+    Type: String
+    Description: value of EcsCfClusterStackName in vpc-ecs-cluster.yaml cloudformation stack (ends with --ecs-cluster)
+    Default: myezteam--ecs-cluster
+
+  DatabaseSecurityGroup:
+    Type: String
+    Description: security group where the database runs
+    Default: sg-bfd650c2
+
+  DBVPCID:
+    Type: String
+    Description: VPC ID where the database resides
+    Default: vpc-6c84720a
+
+  CreatePeeringConnection:
+    Type: String
+    Description: Create the VPC peering connection to the database VPC.  Usually this is yes for prod, false for others.
+    Default: "no"
+    AllowedValues: [ "no", "yes" ]
+
+  DBCidrBlock:
+    Type: String
+    Description: The CIDR block for the DB VPC
+    Default: 10.0.0.0/16
+
+  DBPublicSubnetARouteTableId:
+    Type: String
+    Description: route table id for DB public subnet A
+    Default: rtb-ace4c0ca
+
+
+Conditions:
+  CreatePeeringConnection: !Equals [ !Ref CreatePeeringConnection, "yes" ]
+
+Resources:
+  EcsTaskRole:
+    Type: AWS::IAM::Role
+    DeletionPolicy: 'Delete' #TODO: https://forums.aws.amazon.com/post!post.jspa?forumID=92&threadID=152800&messageID=859017&reply=true
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2008-10-17
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join [ '-', [ !Ref 'AWS::StackName', 'service', 'policy' ] ]
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'iam:PassRole'
+                  - 'ssm:DescribeParameters'
+                  - 'ssm:GetParametersByPath'
+                  - 'cloudwatch:*'
+                Effect: Allow
+                Resource: '*'
+              - Action: #see https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-access.html
+                  - 'ssm:GetParameter*'
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:ssm:*:${AWS::AccountId}:parameter/*"
+              - Effect: Allow
+                Action:
+                  - 'sns:Get*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:BatchWriteItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:Query"
+                  - "dynamodb:Scan"
+                  - "dynamodb:UpdateItem"
+                Resource:
+                  - "arn:aws:dynamodb:us-east-1:104690896806:table/DEV-*"
+  # Allow access from ec2 instance in RDS
+  DatabaseSecurityGroupInboundRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-ECSHostSecurityGroup"
+      GroupId: !Ref DatabaseSecurityGroup
+  # VPC Peering connection to database VPC
+  DBVPCPeeringConnection:
+    Type: AWS::EC2::VPCPeeringConnection
+    Condition: CreatePeeringConnection
+    Properties:
+      PeerVpcId: !Ref DBVPCID
+      VpcId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-VPC"
+
+  VpcToDbPublicSubnetRoute:
+    Type: AWS::EC2::Route
+    Condition: CreatePeeringConnection
+    Properties:
+      DestinationCidrBlock: !Ref DBCidrBlock
+      RouteTableId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-PublicRouteTableId"
+      VpcPeeringConnectionId: !Ref DBVPCPeeringConnection
+
+  VpcToDbPrivateSubnet1Route:
+    Type: AWS::EC2::Route
+    Condition: CreatePeeringConnection
+    Properties:
+      DestinationCidrBlock: !Ref DBCidrBlock
+      RouteTableId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-PrivateRouteTable1"
+      VpcPeeringConnectionId: !Ref DBVPCPeeringConnection
+
+  VpcToDbPrivateSubnet2Route:
+    Type: AWS::EC2::Route
+    Condition: CreatePeeringConnection
+    Properties:
+      DestinationCidrBlock: !Ref DBCidrBlock
+      RouteTableId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-PrivateRouteTable2"
+      VpcPeeringConnectionId: !Ref DBVPCPeeringConnection
+
+  VpcToDbPrivateSubnet3Route:
+    Type: AWS::EC2::Route
+    Condition: CreatePeeringConnection
+    Properties:
+      DestinationCidrBlock: !Ref DBCidrBlock
+      RouteTableId:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-PrivateRouteTable3"
+      VpcPeeringConnectionId: !Ref DBVPCPeeringConnection
+
+  DbToVpcPublicSubnetRouteA:
+    Type: AWS::EC2::Route
+    Condition: CreatePeeringConnection
+    Properties:
+      DestinationCidrBlock:
+        Fn::ImportValue: !Sub "${EcsCfClusterStackName}-VpcCidr"
+      RouteTableId: !Ref DBPublicSubnetARouteTableId
+      VpcPeeringConnectionId: !Ref DBVPCPeeringConnection
+
+Outputs:
+  TaskIamRoleArn:
+    Description: The IAM role for ECS task
+    Value: !Sub arn:aws:iam::${AWS::AccountId}:role/${EcsTaskRole}

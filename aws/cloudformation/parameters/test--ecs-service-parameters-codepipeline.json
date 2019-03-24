@@ -1,0 +1,24 @@
+{
+  "Parameters": {
+    "EcsCfClusterStackName": "myezteam--ecs-cluster",
+    "CloudFrontCname": "test--api.myezteam.com",
+    "AcmCertificateArn": "arn:aws:acm:us-east-1:104690896806:certificate/b4f5be20-31dc-4e56-b566-2a4824d50d01",
+    "VerifyFromCfHeaderVal": "myEzTeamHeaderValueFromCDN",
+    "TaskIamRoleArn": "arn:aws:iam::104690896806:role/test-myezteam-master-ws-r-EcsTaskRole-1HTZKYGXPDBFP",
+    "SsmEnvPrefix": "/test/myezteam/master/env/",
+    "ContainerPort": "80",
+    "TaskCount": "1",
+    "TaskCpuUnits": "256",
+    "TaskMemory": "512",
+    "DeploymentMinHealthyTaskPercent": "0",
+    "DeploymentMaxTaskPercent": "200",
+    "ServiceMaxCapacity": "1",
+    "ServiceMinCapacity": "0",
+    "ServiceScaleUpAdjustment": "1",
+    "ServiceScaleDownAdjustment": "-1",
+    "ScaleUpCpuPeriods": "3",
+    "ScaleUpCpuPercentageThreshold": "100",
+    "ScaleDownCpuPeriods": "10",
+    "ScaleDownCpuPercentageThreshold": "5"
+  }
+}
