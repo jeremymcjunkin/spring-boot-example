@@ -69,11 +69,11 @@ Parameters:
   LintTestBuildSpecPath:
     Description: Path to the buildspec used to run testcases, relative to your codebase
     Type: String
-    Default: aws/codebuild/testcases-buildspec.yaml
+    Default: aws/codebuild/testcases-buildspec.yml
   CodeBuildProjectBuildSpecPath:
     Description: Path to the buildspec used to build your app image, relative to your codebase
     Type: String
-    Default: aws/codebuild/app-buildspec.yaml   
+    Default: aws/codebuild/app-buildspec.yml
 
 Metadata:
   AWS::CloudFormation::Interface:
