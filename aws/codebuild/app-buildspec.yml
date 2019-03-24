@@ -16,8 +16,6 @@ phases:
       # Print all environment variables (handy for AWS CodeBuild logs)
       - env
       - echo Build started on $IMAGE_TAG
-      - chmod +x ./gradlew
-      - ./gradlew build
       # - sed -i "s/--CodeImage--/${IMAGE_TAG}/" ${CODE_ENTRY_POINT_FILE_PATH}
       - echo Building the Docker image...
       - docker build --build-arg JAR_FILE=build/libs/gs-rest-service-0.1.0.jar -f ${DOCKERFILE_PATH} -t ${IMAGE_REPO_NAME}:${IMAGE_TAG} .
